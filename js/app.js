@@ -171,8 +171,19 @@ function startScanMode() {
   const scanZone = document.getElementById('scan-zone');
   if (scanZone) scanZone.classList.remove('hidden');
   
-  // Lancer le scanner de caméra
-  initQuagga();
+  // 1. Lister les caméras disponibles
+  navigator.mediaDevices.enumerateDevices()
+    .then(devices => {
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      console.log("Caméras trouvées :", videoDevices);
+      
+      // On cherche souvent la dernière caméra de la liste pour les téléphones (capteur principal)
+      const lastCamera = videoDevices[videoDevices.length - 1];
+      const deviceId = lastCamera ? { exact: lastCamera.deviceId } : undefined;
+      
+      // 2. Lancer le scanner avec cet ID spécifique
+      initQuagga(deviceId);
+    });
 }
 
 function stopScanMode() {
@@ -181,24 +192,25 @@ function stopScanMode() {
   try { Quagga.stop(); } catch(e){}
 }
 
-function initQuagga() {
+function initQuagga(deviceId) {
   if (typeof Quagga === 'undefined') {
     console.error("Quagga n'est pas chargé");
     return;
   }
+
+  const constraints = {
+    width: { min: 1280, ideal: 1920 },
+    height: { min: 720, ideal: 1080 },
+    facingMode: deviceId ? undefined : "environment",
+    deviceId: deviceId
+  };
 
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#interactive'),
-      constraints: {
-        width: { min: 1280, ideal: 1920 },
-        height: { min: 720, ideal: 1080 },
-        aspectRatio: { min: 1, max: 2 },
-        facingMode: "environment",
-        focusMode: "continuous"
-      },
+      constraints: constraints
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader"]
