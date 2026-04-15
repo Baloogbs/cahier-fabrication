@@ -25,6 +25,7 @@ function init() {
   }
 
   const page = document.body.className;
+  console.log("Page détectée :", page);
 
   if (page === 'page-login') {
     // Si déjà connecté → accueil direct
@@ -60,6 +61,7 @@ function requireSession() {
 }
 
 function handleLogin() {
+  console.log("Tentative de connexion...");
   const email    = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
@@ -178,7 +180,7 @@ function initQuagga() {
       constraints: {
         width: { min: 640, ideal: 1280 },
         height: { min: 480, ideal: 720 },
-        facingMode: { exact: "environment" }ironment" }
+        facingMode: { exact: "environment" }
       },
     },
     decoder: {
