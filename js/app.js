@@ -62,17 +62,32 @@ function requireSession() {
 
 function handleLogin() {
   console.log("Tentative de connexion...");
-  const email    = document.getElementById('login-email').value.trim().toLowerCase();
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  const users    = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+  const emailEl = document.getElementById('login-email');
+  const passEl  = document.getElementById('login-password');
+  
+  if (!emailEl || !passEl) {
+    console.error("Éléments HTML introuvables : email =", !!emailEl, "pass =", !!passEl);
+    return;
+  }
 
+  const email    = emailEl.value.trim().toLowerCase();
+  const password = passEl.value;
+  const errEl    = document.getElementById('login-error');
+  
+  console.log("Email saisi :", email);
+  const usersStr = localStorage.getItem(USERS_KEY);
+  console.log("Contenu local (USERS_KEY) :", usersStr);
+  
+  const users = JSON.parse(usersStr || '[]');
   const user = users.find(u => u.email === email && u.password === password);
+  
   if (user) {
+    console.log("Utilisateur trouvé :", user.nom);
     localStorage.setItem(SESSION_KEY, JSON.stringify({ email: user.email, nom: user.nom }));
     window.location.href = 'accueil.html';
   } else {
-    errEl.classList.remove('hidden');
+    console.warn("Échec : Identifiant ou mot de passe incorrect.");
+    if (errEl) errEl.classList.remove('hidden');
   }
 }
 
