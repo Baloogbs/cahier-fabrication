@@ -378,10 +378,13 @@ function renderIngredients() {
   if (!ingredients.length) { list.innerHTML = ''; return; }
   
   list.innerHTML = ingredients.map(ing => `
-    <div class="ingredient-item">
+    <div class="ingredient-item ${ing.validated ? 'validated' : ''}">
       <div class="ing-header">
         ${ing.photo 
-          ? `<input type="text" class="ing-name-input" placeholder="Nom du produit (ex: Paleron)" value="${ing.nom}" oninput="updateIngredient(${ing.id}, 'nom', this.value)" style="flex:1; margin-right:10px; height:32px; font-weight:500; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px;" />`
+          ? `<input type="text" class="ing-name-input" placeholder="Nom du produit" value="${ing.nom}" 
+              oninput="updateIngredient(${ing.id}, 'nom', this.value)" 
+              ${ing.validated ? 'disabled' : ''}
+              style="flex:1; margin-right:10px; height:32px; font-weight:500; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px;" />`
           : `<span class="ing-name-label">${ing.nom}</span>`
         }
         <button class="ing-delete" onclick="removeIngredient(${ing.id})">&#10005;</button>
@@ -397,16 +400,35 @@ function renderIngredients() {
         <div class="ing-field">
           <label>N° de lot</label>
           <input type="text" placeholder="Ex: LOT2026A" value="${ing.lot}"
-            oninput="updateIngredient(${ing.id}, 'lot', this.value)" />
+            oninput="updateIngredient(${ing.id}, 'lot', this.value)"
+            ${ing.validated ? 'disabled' : ''} />
         </div>
         <div class="ing-field">
           <label>DLC</label>
           <input type="date" value="${ing.dlc}"
-            oninput="updateIngredient(${ing.id}, 'dlc', this.value)" />
+            oninput="updateIngredient(${ing.id}, 'dlc', this.value)"
+            ${ing.validated ? 'disabled' : ''} />
         </div>
       </div>
+
+      <button class="btn-validate-ing ${ing.validated ? 'btn-validated' : ''}" 
+        onclick="toggleValidateIngredient(${ing.id})" 
+        style="width:100%; margin-top:10px; padding: 8px; border-radius: 6px; border: none; 
+               background: ${ing.validated ? '#e0f2f1' : '#1D9E75'}; 
+               color: ${ing.validated ? '#00695c' : 'white'};
+               font-weight: 500;">
+        ${ing.validated ? '✓ Validé' : 'Valider cet ingrédient'}
+      </button>
     </div>
   `).join('');
+}
+
+function toggleValidateIngredient(id) {
+  const ing = ingredients.find(i => i.id === id);
+  if (ing) {
+    ing.validated = !ing.validated;
+    renderIngredients();
+  }
 }
 
 function saveFabrication() {
