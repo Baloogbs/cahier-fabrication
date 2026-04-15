@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Fiche de fabrication</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="page-detail">
+
+  <div class="app-wrapper">
+    <header class="app-header">
+      <button class="btn-back" onclick="window.location.href='accueil.html'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Retour
+      </button>
+      <h1 class="app-title" style="font-size:17px;">Fiche de fabrication</h1>
+      <div style="width:70px;"></div>
+    </header>
+
+    <main class="main-content" id="detail-content">
+      <div class="empty-state">Chargement...</div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

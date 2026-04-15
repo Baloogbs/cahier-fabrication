@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Cahier de fabrication</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="page-login">
+
+  <div class="login-wrapper">
+    <div class="login-logo">
+      <div class="logo-icon-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <line x1="9" y1="12" x2="15" y2="12"/>
+          <line x1="9" y1="16" x2="13" y2="16"/>
+        </svg>
+      </div>
+      <h1>Cahier de fabrication</h1>
+      <p>Boucherie &mdash; Carrefour</p>
+    </div>
+
+    <div class="card">
+      <div class="field-row">
+        <label class="field-label">Identifiant</label>
+        <input type="email" id="login-email" placeholder="prenom.nom@carrefour.com" autocomplete="username" />
+      </div>
+      <div class="field-row">
+        <label class="field-label">Mot de passe</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div class="forgot-link">Mot de passe oublié ?</div>
+      <button class="btn-primary" id="login-btn" onclick="handleLogin()">Se connecter</button>
+      <div id="login-error" class="error-msg hidden">Identifiant ou mot de passe incorrect.</div>
+    </div>
+
+    <div class="sso-note">Version prototype &mdash; <span>SSO Carrefour à intégrer</span> après validation DSI</div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
