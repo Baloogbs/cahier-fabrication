@@ -492,11 +492,18 @@ function renderDetail() {
     }
     return `
       <div class="ing-row">
-        <div>
-          <div class="ing-row-name">${ing.nom}</div>
-          <div class="ing-row-meta">Lot : ${ing.lot || '—'}</div>
+        ${ing.photo ? `
+          <div style="margin-bottom: 8px;">
+            <img src="${ing.photo}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
+          </div>
+        ` : ''}
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div class="ing-row-name">${ing.nom || 'Sans nom'}</div>
+            <div class="ing-row-meta">Lot : ${ing.lot || '—'}</div>
+          </div>
+          <span class="dlc-badge ${dlcClass}">DLC ${dlcLabel}</span>
         </div>
-        <span class="dlc-badge ${dlcClass}">DLC ${dlcLabel}</span>
       </div>
     `;
   }).join('');
