@@ -74,9 +74,18 @@
 
           <div id="scan-zone" class="hidden" style="margin-bottom: 15px;">
             <!-- Zone pour la caméra -->
-            <div id="interactive" class="viewport" style="width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative;">
-               <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid var(--green); width: 80%; height: 60%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events: none;"></div>
-               <button id="switch-camera-btn" onclick="switchCamera()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; border: 1px solid white; border-radius: 4px; padding: 5px 10px; font-size: 12px; z-index: 10;">
+            <div id="interactive" class="viewport" style="width: 100%; height: 250px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; position: relative; border: 2px solid #333;">
+               <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #1D9E75; width: 70%; height: 40%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); pointer-events: none; border-radius: 4px;"></div>
+               
+               <!-- BOUTON CHANGER DE CAMERA TRES VISIBLE -->
+               <button id="switch-camera-btn" onclick="switchCamera()" 
+                 style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); 
+                        background: #1D9E75; color: white; border: none; border-radius: 25px; 
+                        padding: 10px 20px; font-size: 14px; font-weight: 500; z-index: 100;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
+                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                 </svg>
                  Changer de caméra
                </button>
             </div>
