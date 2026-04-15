@@ -171,49 +171,17 @@ let availableCameras = [];
 
 function startScanMode() {
   document.getElementById('ing-choices').classList.add('hidden');
-  const scanZone = document.getElementById('scan-zone');
-  if (scanZone) scanZone.classList.remove('hidden');
   
-  // Lister les caméras et lancer la première
-  navigator.mediaDevices.enumerateDevices()
-    .then(devices => {
-      availableCameras = devices.filter(device => device.kind === 'videoinput');
-      console.log("Caméras trouvées :", availableCameras);
-      
-      if (availableCameras.length > 0) {
-        // On commence par la première caméra arrière trouvée (souvent celle par défaut)
-        currentCameraIndex = availableCameras.findIndex(d => d.label.toLowerCase().includes('back')) || 0;
-        if (currentCameraIndex === -1) currentCameraIndex = 0;
-        
-        initQuagga({ exact: availableCameras[currentCameraIndex].deviceId });
-      } else {
-        initQuagga(); // Mode dégradé
-      }
-    });
+  // SOLUTION SPECIFIQUE GALAXY S21 / SAMSUNG
+  // Le mode "Live Stream" avec Quagga cause trop d'erreurs Overconstrained
+  // On bascule directement sur l'appareil photo haute qualité du S21
+  console.log("Mode Samsung S21 : Utilisation de l'appareil photo natif");
+  takePhoto();
 }
 
-function switchCamera() {
-  if (availableCameras.length <= 1) return;
-  
-  // Passer à la caméra suivante
-  currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-  console.log("Changement vers caméra :", availableCameras[currentCameraIndex].label);
-  
-  // Arrêter proprement Quagga avant de relancer
-  try { Quagga.stop(); } catch(e) {}
-  
-  // Relancer après une courte pause pour laisser le temps au matériel
-  setTimeout(() => {
-    initQuagga({ exact: availableCameras[currentCameraIndex].deviceId });
-  }, 300);
-}
-
-function stopScanMode() {
-  const scanZone = document.getElementById('scan-zone');
-  if (scanZone) scanZone.classList.add('hidden');
-  try { Quagga.stop(); } catch(e){}
-}
-
+/**
+ * Ancienne fonction Quagga conservée au cas où, mais court-circuitée pour le S21
+ */
 function initQuagga(deviceId) {
   if (typeof Quagga === 'undefined') {
     console.error("Quagga n'est pas chargé");
