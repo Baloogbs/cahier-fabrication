@@ -220,11 +220,12 @@ function initQuagga(deviceId) {
     return;
   }
 
+  // On utilise des contraintes plus souples pour éviter l'erreur OverconstrainedError
   const constraints = {
-    width: { min: 1280, ideal: 1920 },
-    height: { min: 720, ideal: 1080 },
     facingMode: deviceId ? undefined : "environment",
-    deviceId: deviceId
+    deviceId: deviceId,
+    width: { ideal: 1280 }, // On demande l'idéal sans forcer le minimum trop haut
+    height: { ideal: 720 }
   };
 
   Quagga.init({
@@ -232,14 +233,26 @@ function initQuagga(deviceId) {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#interactive'),
-      constraints: constraints
+      constraints: constraints,
+      area: { // On réduit la zone de scan pour améliorer les performances
+        top: "10%",
+        right: "10%",
+        left: "10%",
+        bottom: "10%"
+      }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader"]
     }
   }, function(err) {
     if (err) {
-      console.error(err);
+      console.error("Erreur Quagga Init:", err);
+      // Si l'erreur est liée aux contraintes, on réessaie avec le minimum vital
+      if (err.name === "OverconstrainedError") {
+        console.warn("Retrying with minimal constraints...");
+        initQuaggaBasic(deviceId);
+        return;
+      }
       alert("Erreur caméra : " + err);
       return;
     }
@@ -252,6 +265,27 @@ function initQuagga(deviceId) {
       Quagga.stop();
       addIngredientFromCode(code);
     }
+  });
+}
+
+/**
+ * Version de secours si la HD échoue sur un capteur spécifique
+ */
+function initQuaggaBasic(deviceId) {
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#interactive'),
+      constraints: {
+        deviceId: deviceId,
+        facingMode: deviceId ? undefined : "environment"
+      }
+    },
+    decoder: { readers: ["ean_reader", "ean_8_reader"] }
+  }, function(err) {
+    if (err) alert("Erreur fatale caméra : " + err);
+    else Quagga.start();
   });
 }
 
