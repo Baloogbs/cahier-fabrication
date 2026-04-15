@@ -220,9 +220,13 @@ function initQuagga(deviceId) {
     return;
   }
 
-  // SUPPRESSION TOTALE des contraintes de largeur/hauteur fixes pour éviter OverconstrainedError
-  // On laisse le navigateur choisir la meilleure résolution pour le capteur sélectionné
-  const constraints = deviceId ? { deviceId: deviceId } : { facingMode: "environment" };
+  // On essaie de vider TOTALEMENT les contraintes pour laisser le navigateur décider
+  const constraints = {};
+  if (deviceId && deviceId.exact) {
+      constraints.deviceId = deviceId;
+  } else {
+      constraints.facingMode = "environment";
+  }
 
   Quagga.init({
     inputStream: {
@@ -237,6 +241,12 @@ function initQuagga(deviceId) {
   }, function(err) {
     if (err) {
       console.error("Erreur Quagga Init:", err);
+      // SOLUTION DE SECOURS RADICALE : Utiliser l'appareil photo natif si le live stream échoue
+      if (err.name === "OverconstrainedError" || err.name === "NotReadableError") {
+          alert("Mode de secours : Le scanner fluide ne fonctionne pas sur ce capteur. L'appareil photo standard va être utilisé.");
+          takePhoto(); // On bascule sur la photo classique
+          return;
+      }
       alert("Erreur caméra : " + err.name);
       return;
     }
