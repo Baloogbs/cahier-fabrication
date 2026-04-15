@@ -17,9 +17,13 @@ const DEFAULT_USERS = [
 
 // ---- INITIALISATION ----
 function init() {
-  if (!localStorage.getItem(USERS_KEY)) {
+  // Forcer la création des utilisateurs si localstorage vide ou corrompu
+  const usersStr = localStorage.getItem(USERS_KEY);
+  if (!usersStr || usersStr === '[]') {
     localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
+    console.log("Utilisateurs de démo initialisés dans localStorage.");
   }
+  
   if (!localStorage.getItem(FABRICATIONS_KEY)) {
     localStorage.setItem(FABRICATIONS_KEY, JSON.stringify([]));
   }
@@ -105,7 +109,7 @@ document.addEventListener('keydown', function(e) {
 function renderHeader() {
   const session = getSession();
   const el = document.getElementById('header-user');
-  if (el && session) el.textContent = session.nom + ' — Boucherie Carrefour';
+  if (el) el.textContent = 'Boucherie Carrefour';
 }
 
 function toggleChoices() {
@@ -122,23 +126,29 @@ function renderHistory() {
   const fabrications = getFabrications();
   const container = document.getElementById('history-list');
   if (!fabrications.length) {
-    container.innerHTML = '<div class="empty-state">Aucune fabrication enregistrée pour le moment.</div>';
+    container.innerHTML = '<div class="empty-state" style="text-align: center;">Aucune fabrication enregistrée pour le moment.</div>';
     return;
   }
 
-  // Grouper par mois
-  const groups = {};
-  fabrications.slice().reverse().forEach(fab => {
+  // Filtrer pour le mois en cours uniquement
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const fabsDuMois = fabrications.filter(fab => {
     const d = new Date(fab.date);
-    const key = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(fab);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   });
 
-  container.innerHTML = Object.entries(groups).map(([mois, fabs]) => `
+  if (!fabsDuMois.length) {
+    container.innerHTML = '<div class="empty-state" style="text-align: center; color: #999;">Aucune préparation ce mois-ci.</div>';
+    return;
+  }
+
+  // Regrouper (ici une seule liste plate)
+  container.innerHTML = `
     <div class="month-group">
-      <div class="month-label">${capitalize(mois)}</div>
-      ${fabs.map(fab => `
+      ${fabsDuMois.map(fab => `
         <div class="fab-item" onclick="goToDetail('${fab.id}')">
           <div>
             <div class="fab-name">${fab.nom}</div>
@@ -148,7 +158,7 @@ function renderHistory() {
         </div>
       `).join('')}
     </div>
-  `).join('');
+  `;
 }
 
 function goToDetail(id) {
@@ -336,6 +346,28 @@ function removeIngredient(id) {
   renderIngredients();
 }
 
+let activeIngIdForPhoto = null;
+
+function addNewIngredient() {
+  const id = Date.now();
+  ingredients.push({ id, code: 'MANUAL', nom: '', lot: '', dlc: '', photos: [], validated: false });
+  renderIngredients();
+}
+
+function removePhotoFromIng(ingId, photoIdx) {
+  const ing = ingredients.find(i => i.id === ingId);
+  if (ing && ing.photos) {
+    ing.photos.splice(photoIdx, 1);
+    renderIngredients();
+  }
+}
+
+function triggerPhotoForIng(id) {
+  activeIngIdForPhoto = id;
+  const photoInput = document.getElementById('photo-input');
+  if (photoInput) photoInput.click();
+}
+
 function updateIngredient(id, field, value) {
   const ing = ingredients.find(i => i.id === id);
   if (ing) {
@@ -350,23 +382,17 @@ function handlePhoto(event) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const data = e.target.result;
-    const id = Date.now();
-    // On ajoute directement l'ingrédient de type photo
-    ingredients.push({ 
-      id, 
-      code: 'PHOTO', 
-      nom: '', 
-      lot: '', 
-      dlc: '', 
-      photo: data 
-    });
+    
+    if (activeIngIdForPhoto) {
+      const ing = ingredients.find(i => i.id === activeIngIdForPhoto);
+      if (ing) {
+        if (!ing.photos) ing.photos = [];
+        ing.photos.push(data);
+      }
+      activeIngIdForPhoto = null;
+    }
+    
     renderIngredients();
-    
-    // Masquer le menu de choix après la capture
-    const choices = document.getElementById('ing-choices');
-    if (choices) choices.classList.add('hidden');
-    
-    // Réinitialiser l'input pour permettre une nouvelle photo identique (si besoin)
     event.target.value = '';
   };
   reader.readAsDataURL(file);
@@ -377,50 +403,79 @@ function renderIngredients() {
   if (!list) return;
   if (!ingredients.length) { list.innerHTML = ''; return; }
   
-  list.innerHTML = ingredients.map(ing => `
-    <div class="ingredient-item ${ing.validated ? 'validated' : ''}">
-      <div class="ing-header">
-        ${ing.photo 
-          ? `<input type="text" class="ing-name-input" placeholder="Nom du produit" value="${ing.nom}" 
-              oninput="updateIngredient(${ing.id}, 'nom', this.value)" 
-              ${ing.validated ? 'disabled' : ''}
-              style="flex:1; margin-right:10px; height:32px; font-weight:500; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px;" />`
-          : `<span class="ing-name-label">${ing.nom}</span>`
-        }
-        <button class="ing-delete" onclick="removeIngredient(${ing.id})">&#10005;</button>
-      </div>
-      
-      ${ing.photo ? `
-        <div style="margin: 10px 0;">
-          <img src="${ing.photo}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border: 1px solid #eee;" />
-        </div>` : ''
-      }
+  list.innerHTML = ingredients.map(ing => {
+    if (ing.validated) {
+      // AFFICHAGE RÉDUIT (Ingrédient validé)
+      return `
+        <div class="ingredient-item validated" style="padding: 10px; background: #f0f7f4; border: 1px solid #1D9E75; opacity: 0.9;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="background: #1D9E75; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">✓</div>
+              <div style="font-weight: 500; font-size: 14px; color: #00695c;">${ing.nom || 'Sans nom'}</div>
+              <div style="font-size: 12px; color: #666; margin-left: 5px;">(Lot: ${ing.lot || '—'})</div>
+            </div>
+            <button onclick="toggleValidateIngredient(${ing.id})" style="background: none; border: none; color: #1D9E75; font-size: 12px; text-decoration: underline; font-weight: 500;">Modifier</button>
+          </div>
+        </div>
+      `;
+    }
 
-      <div class="ing-fields">
+    // AFFICHAGE COMPLET (Pendant la saisie)
+    return `
+    <div class="ingredient-item">
+      <div class="ing-header">
+        <div style="flex:1;">
+          <label class="field-label" style="font-size:11px; margin-bottom:4px; display:block; color:#666;">Nom de l'ingrédient</label>
+          <input type="text" class="ing-name-input" placeholder="Ex: Boeuf, Sel, Marinade..." value="${ing.nom}" 
+            oninput="updateIngredient(${ing.id}, 'nom', this.value)" 
+            style="width:100%; height:36px; font-weight:500; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; background:#fff;" />
+        </div>
+        <button class="ing-delete" onclick="removeIngredient(${ing.id})" style="margin-top:20px;">&#10005;</button>
+      </div>
+
+      <div class="ing-fields" style="margin-top:10px;">
         <div class="ing-field">
-          <label>N° de lot</label>
+          <label style="font-size:11px; color:#666;">n° de Lot</label>
           <input type="text" placeholder="Ex: LOT2026A" value="${ing.lot}"
             oninput="updateIngredient(${ing.id}, 'lot', this.value)"
-            ${ing.validated ? 'disabled' : ''} />
+            style="height:36px;" />
         </div>
         <div class="ing-field">
-          <label>DLC</label>
+          <label style="font-size:11px; color:#666;">DLC</label>
           <input type="date" value="${ing.dlc}"
             oninput="updateIngredient(${ing.id}, 'dlc', this.value)"
-            ${ing.validated ? 'disabled' : ''} />
+            style="height:36px;" />
+        </div>
+      </div>
+      
+      <!-- ZONE MULTI-PHOTOS -->
+      <div style="margin: 15px 0;">
+        <label style="font-size:11px; color:#666; display:block; margin-bottom:8px;">Photos (Étiquette, Produit...)</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          ${(ing.photos || []).map((p, idx) => `
+            <div style="position:relative;">
+              <img src="${p}" style="width:70px; height:70px; object-fit:cover; border-radius:8px; border: 1px solid #ddd;" />
+              <button onclick="removePhotoFromIng(${ing.id}, ${idx})" style="position:absolute; top:-5px; right:-5px; background:#d32f2f; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+          `).join('')}
+          
+          <button onclick="triggerPhotoForIng(${ing.id})" 
+            style="width:70px; height:70px; border: 1.5px dashed #1D9E75; border-radius: 8px; background: #f0f7f4; color: #1D9E75; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Ajouter
+          </button>
         </div>
       </div>
 
-      <button class="btn-validate-ing ${ing.validated ? 'btn-validated' : ''}" 
+      <button class="btn-validate-ing" 
         onclick="toggleValidateIngredient(${ing.id})" 
-        style="width:100%; margin-top:10px; padding: 8px; border-radius: 6px; border: none; 
-               background: ${ing.validated ? '#e0f2f1' : '#1D9E75'}; 
-               color: ${ing.validated ? '#00695c' : 'white'};
-               font-weight: 500;">
-        ${ing.validated ? '✓ Validé' : 'Valider cet ingrédient'}
+        style="width:100%; margin-top:5px; padding: 12px; border-radius: 8px; border: none; 
+               background: #1D9E75; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        ✓ Valider l'ingrédient
       </button>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function toggleValidateIngredient(id) {
@@ -490,13 +545,18 @@ function renderDetail() {
       if (dlcDate < today)         { dlcClass = 'dlc-expired'; allOk = false; }
       else if (dlcDate <= warn3)   { dlcClass = 'dlc-warn';    hasWarn = true; }
     }
+    
+    // Affichage multi-photos dans le détail
+    const photosArr = ing.photos || (ing.photo ? [ing.photo] : []);
+    const photosHtml = photosArr.length > 0 ? `
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+        ${photosArr.map(p => `<img src="${p}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />`).join('')}
+      </div>
+    ` : '';
+
     return `
       <div class="ing-row">
-        ${ing.photo ? `
-          <div style="margin-bottom: 8px;">
-            <img src="${ing.photo}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
-          </div>
-        ` : ''}
+        ${photosHtml}
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div class="ing-row-name">${ing.nom || 'Sans nom'}</div>
@@ -527,7 +587,15 @@ function renderDetail() {
 
   cont.innerHTML = `
     <div class="card">
-      <span class="type-badge ${fab.type === 'marinade' ? 'mar' : fab.type === 'farce' ? 'farce' : ''}">${typeLabel(fab.type)}</span>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <span class="type-badge ${fab.type === 'marinade' ? 'mar' : fab.type === 'farce' ? 'farce' : ''}">${typeLabel(fab.type)}</span>
+        <button onclick="deleteFabrication('${fab.id}')" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 5px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
       <div class="detail-name">${fab.nom}</div>
       <div class="info-grid">
         <div class="info-block">
@@ -570,6 +638,16 @@ function renderDetail() {
 // ---- UTILITAIRES ----
 function getFabrications() {
   try { return JSON.parse(localStorage.getItem(FABRICATIONS_KEY) || '[]'); } catch { return []; }
+}
+
+function deleteFabrication(id) {
+  if (!confirm("Voulez-vous vraiment supprimer cette fabrication ? Cette action est irréversible.")) return;
+  
+  const fabs = getFabrications();
+  const updatedFabs = fabs.filter(f => f.id !== id);
+  localStorage.setItem(FABRICATIONS_KEY, JSON.stringify(updatedFabs));
+  
+  window.location.href = 'accueil.html';
 }
 
 function formatDate(dateStr) {

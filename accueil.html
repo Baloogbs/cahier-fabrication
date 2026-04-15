@@ -16,7 +16,7 @@
 
   <div class="app-wrapper">
     <header class="app-header">
-      <div>
+      <div style="flex: 1; text-align: center; margin-left: 40px;">
         <h1 class="app-title">Cahier de fabrication</h1>
         <p class="app-subtitle" id="header-user">Boucherie &mdash; Carrefour</p>
       </div>
@@ -35,12 +35,14 @@
         <span>Nouvelle fabrication bouchère</span>
       </button>
 
-      <div class="section-header">
-        <span class="section-title">Historique</span>
+      <div style="height: 1px; background-color: #999; margin: 10px 20px 5px 20px;"></div>
+
+      <div class="section-header" style="justify-content: center; margin-bottom: 10px;">
+        <span class="section-title" style="font-weight: 500; font-size: 1.1em; color: #666;">Préparations récentes</span>
       </div>
 
       <div id="history-list">
-        <div class="empty-state">Aucune fabrication enregistrée pour le moment.</div>
+        <div class="empty-state" style="text-align: center;">Aucune fabrication enregistrée pour le moment.</div>
       </div>
     </main>
   </div>
