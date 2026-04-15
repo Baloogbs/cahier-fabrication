@@ -76,6 +76,9 @@
             <!-- Zone pour la caméra -->
             <div id="interactive" class="viewport" style="width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative;">
                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid var(--green); width: 80%; height: 60%; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events: none;"></div>
+               <button id="switch-camera-btn" onclick="switchCamera()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; border: 1px solid white; border-radius: 4px; padding: 5px 10px; font-size: 12px; z-index: 10;">
+                 Changer de caméra
+               </button>
             </div>
             <div class="scan-input-row">
               <input type="text" id="scan-input" placeholder="Scanner le code-barres..." 

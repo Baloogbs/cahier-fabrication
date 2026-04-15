@@ -166,24 +166,46 @@ function toggleIngChoices() {
   document.getElementById('scan-zone').classList.add('hidden');
 }
 
+let currentCameraIndex = 0;
+let availableCameras = [];
+
 function startScanMode() {
   document.getElementById('ing-choices').classList.add('hidden');
   const scanZone = document.getElementById('scan-zone');
   if (scanZone) scanZone.classList.remove('hidden');
   
-  // 1. Lister les caméras disponibles
+  // Lister les caméras et lancer la première
   navigator.mediaDevices.enumerateDevices()
     .then(devices => {
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      console.log("Caméras trouvées :", videoDevices);
+      availableCameras = devices.filter(device => device.kind === 'videoinput');
+      console.log("Caméras trouvées :", availableCameras);
       
-      // On cherche souvent la dernière caméra de la liste pour les téléphones (capteur principal)
-      const lastCamera = videoDevices[videoDevices.length - 1];
-      const deviceId = lastCamera ? { exact: lastCamera.deviceId } : undefined;
-      
-      // 2. Lancer le scanner avec cet ID spécifique
-      initQuagga(deviceId);
+      if (availableCameras.length > 0) {
+        // On commence par la première caméra arrière trouvée (souvent celle par défaut)
+        currentCameraIndex = availableCameras.findIndex(d => d.label.toLowerCase().includes('back')) || 0;
+        if (currentCameraIndex === -1) currentCameraIndex = 0;
+        
+        initQuagga({ exact: availableCameras[currentCameraIndex].deviceId });
+      } else {
+        initQuagga(); // Mode dégradé
+      }
     });
+}
+
+function switchCamera() {
+  if (availableCameras.length <= 1) return;
+  
+  // Passer à la caméra suivante
+  currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+  console.log("Changement vers caméra :", availableCameras[currentCameraIndex].label);
+  
+  // Arrêter proprement Quagga avant de relancer
+  try { Quagga.stop(); } catch(e) {}
+  
+  // Relancer après une courte pause pour laisser le temps au matériel
+  setTimeout(() => {
+    initQuagga({ exact: availableCameras[currentCameraIndex].deviceId });
+  }, 300);
 }
 
 function stopScanMode() {
