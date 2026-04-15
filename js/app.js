@@ -220,26 +220,16 @@ function initQuagga(deviceId) {
     return;
   }
 
-  // On utilise des contraintes plus souples pour éviter l'erreur OverconstrainedError
-  const constraints = {
-    facingMode: deviceId ? undefined : "environment",
-    deviceId: deviceId,
-    width: { ideal: 1280 }, // On demande l'idéal sans forcer le minimum trop haut
-    height: { ideal: 720 }
-  };
+  // SUPPRESSION TOTALE des contraintes de largeur/hauteur fixes pour éviter OverconstrainedError
+  // On laisse le navigateur choisir la meilleure résolution pour le capteur sélectionné
+  const constraints = deviceId ? { deviceId: deviceId } : { facingMode: "environment" };
 
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#interactive'),
-      constraints: constraints,
-      area: { // On réduit la zone de scan pour améliorer les performances
-        top: "10%",
-        right: "10%",
-        left: "10%",
-        bottom: "10%"
-      }
+      constraints: constraints
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader"]
@@ -247,13 +237,7 @@ function initQuagga(deviceId) {
   }, function(err) {
     if (err) {
       console.error("Erreur Quagga Init:", err);
-      // Si l'erreur est liée aux contraintes, on réessaie avec le minimum vital
-      if (err.name === "OverconstrainedError") {
-        console.warn("Retrying with minimal constraints...");
-        initQuaggaBasic(deviceId);
-        return;
-      }
-      alert("Erreur caméra : " + err);
+      alert("Erreur caméra : " + err.name);
       return;
     }
     Quagga.start();
