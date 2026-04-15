@@ -193,9 +193,11 @@ function initQuagga() {
       type: "LiveStream",
       target: document.querySelector('#interactive'),
       constraints: {
-        width: { min: 640, ideal: 1280 },
-        height: { min: 480, ideal: 720 },
-        facingMode: { exact: "environment" }
+        width: { min: 1280, ideal: 1920 },
+        height: { min: 720, ideal: 1080 },
+        aspectRatio: { min: 1, max: 2 },
+        facingMode: "environment",
+        focusMode: "continuous"
       },
     },
     decoder: {
