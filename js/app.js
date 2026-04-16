@@ -340,7 +340,12 @@ function handleScanInput(event) {
     if (!code) return;
     addIngredientFromCode(code);
     input.value = '';
-    // Masquer fillIngredientFromCode(ingId, code) {
+    const zone = document.getElementById('scan-zone');
+    if (zone) zone.classList.add('hidden');
+  }
+}
+
+async function fillIngredientFromCode(ingId, code) {
   const ing = ingredients.find(i => i.id === ingId);
   if (!ing) return;
 
@@ -352,12 +357,6 @@ function handleScanInput(event) {
     ing.photos.push(productData.img);
   }
   renderIngredients();
-}
-
-async function la zone de scan après ajout
-    const zone = document.getElementById('scan-zone');
-    if (zone) zone.classList.add('hidden');
-  }
 }
 
 async function addIngredientFromCode(code) {
