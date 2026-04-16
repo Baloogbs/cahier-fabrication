@@ -522,12 +522,33 @@ function renderIngredients() {
         <button class="ing-delete" onclick="removeIngredient(${ing.id})" style="margin-top:20px;">&#10005;</button>
       </div>
 
-      <div class="ing-fields" style="margin-top:10px;">
+      <!-- BOUTONS D'ACTION (Scanner / Photo) -->
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button onclick="startModernScan(${ing.id})" 
+          style="flex: 1; height: 44px; background: #1D9E75; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          Scanner
+        </button>
+        <button onclick="triggerPhotoForIng(${ing.id})" 
+          style="flex: 1; height: 44px; background: #0C447C; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          Photo
+        </button>
+      </div>
+
+      <div class="ing-fields" style="margin-top:15px;">
         <div class="ing-field">
           <label style="font-size:11px; color:#666;">n° de Lot</label>
           <input type="text" placeholder="Ex: LOT2026A" value="${ing.lot}"
             oninput="updateIngredient(${ing.id}, 'lot', this.value)"
             style="height:36px;" />
+        </div>
         </div>
         <div class="ing-field">
           <label style="font-size:11px; color:#666;">DLC</label>
