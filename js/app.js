@@ -554,13 +554,14 @@ function toggleValidateIngredient(id) {
 }
 
 function saveFabrication() {
-  const nom   = document.getElementById('fab-nom').value.trim();
-  const poids = document.getElementById('fab-poids').value;
-  const unite = document.getElementById('fab-unite').value;
-  const date  = document.getElementById('fab-date').value;
-  const type  = sessionStorage.getItem('new_type') || 'preparation';
-  const errEl = document.getElementById('save-error');
-  const session = getSession();
+  const nom          = document.getElementById('fab-nom').value.trim();
+  const preparateur  = document.getElementById('fab-preparateur').value.trim();
+  const poids        = document.getElementById('fab-poids').value;
+  const unite        = document.getElementById('fab-unite').value;
+  const date         = document.getElementById('fab-date').value;
+  const type         = sessionStorage.getItem('new_type') || 'preparation';
+  const errEl        = document.getElementById('save-error');
+  const session      = getSession();
 
   if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
   if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
@@ -570,6 +571,7 @@ function saveFabrication() {
     id: 'fab_' + Date.now(),
     type,
     nom,
+    preparateur: preparateur || (session ? session.nom : 'Inconnu'),
     poids: parseFloat(poids).toFixed(1),
     unite,
     date,
@@ -676,8 +678,8 @@ function renderDetail() {
           <span class="info-value">${fab.poids} ${fab.unite || 'kg'}</span>
         </div>
         <div class="info-block" style="margin-top:8px;">
-          <span class="info-label">Fabriqué par</span>
-          <span class="info-value">${fab.auteur}</span>
+          <span class="info-label">Préparé par</span>
+          <span class="info-value">${fab.preparateur || fab.auteur}</span>
         </div>
         <div class="info-block" style="margin-top:8px;">
           <span class="info-label">Heure</span>
