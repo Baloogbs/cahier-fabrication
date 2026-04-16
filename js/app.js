@@ -687,11 +687,6 @@ function renderDetail() {
       <div class="card-title">Ingrédients &amp; traçabilité</div>
       ${ingsHtml}
     </div>` : ''}
-
-    <div class="card">
-      <div class="card-title">Photo</div>
-      ${photoHtml}
-    </div>
   `;
 }
 
