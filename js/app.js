@@ -19,12 +19,9 @@ const DEFAULT_USERS = [
 document.addEventListener('DOMContentLoaded', init);
 
 function init() {
-  // Forcer la création des utilisateurs si localstorage vide ou corrompu
-  const usersStr = localStorage.getItem(USERS_KEY);
-  if (!usersStr || usersStr === '[]') {
-    localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
-    console.log("Utilisateurs de démo initialisés dans localStorage.");
-  }
+  console.log("Initialisation forcée...");
+  // Forcer la création des utilisateurs
+  localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
   
   if (!localStorage.getItem(FABRICATIONS_KEY)) {
     localStorage.setItem(FABRICATIONS_KEY, JSON.stringify([]));
