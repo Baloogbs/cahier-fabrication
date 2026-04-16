@@ -16,6 +16,8 @@ const DEFAULT_USERS = [
 ];
 
 // ---- INITIALISATION ----
+document.addEventListener('DOMContentLoaded', init);
+
 function init() {
   // Forcer la création des utilisateurs si localstorage vide ou corrompu
   const usersStr = localStorage.getItem(USERS_KEY);
