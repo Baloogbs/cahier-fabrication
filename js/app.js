@@ -110,8 +110,10 @@ let currentIngIdForScan = null;
 
 function startModernScan(ingId) {
   currentIngIdForScan = ingId || null;
+  const overlay = document.getElementById('scanner-overlay');
+  overlay.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   const readerDiv = document.getElementById('reader');
-  readerDiv.classList.remove('hidden');
 
   if (!html5QrCode) {
     html5QrCode = new Html5Qrcode("reader");
@@ -119,10 +121,10 @@ function startModernScan(ingId) {
 
   html5QrCode.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 150 } },
+    { fps: 10, qrbox: { width: 200, height: 100 } },
     (decodedText) => {
       html5QrCode.stop().then(() => {
-        readerDiv.classList.add('hidden');
+        document.getElementById('scanner-overlay').classList.add('hidden');
         if (currentIngIdForScan) {
           fillIngredientFromCode(currentIngIdForScan, decodedText);
         } else {
@@ -134,8 +136,15 @@ function startModernScan(ingId) {
   ).catch((err) => {
     console.error("Erreur scanner :", err);
     alert("Impossible d'ouvrir le scanner : " + err);
-    readerDiv.classList.add('hidden');
+    document.getElementById('scanner-overlay').classList.add('hidden');
   });
+}
+
+function stopModernScan() {
+  if (html5QrCode) {
+    html5QrCode.stop().catch(() => {});
+  }
+  document.getElementById('scanner-overlay').classList.add('hidden');
 }
 
 // ---- ACCUEIL ----

@@ -15,6 +15,16 @@
 </head>
 <body class="page-saisie">
 
+  <!-- Scanner en overlay fixe en haut -->
+  <div id="scanner-overlay" class="hidden" style="position:fixed; top:0; left:0; right:0; z-index:1000; background:#000; padding: 10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="color:white; font-size:14px; font-weight:500;">Scanner le code-barre</span>
+      <button onclick="stopModernScan()" style="background:#e53935; color:white; border:none; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:500;">✕ Fermer</button>
+    </div>
+    <div id="reader" style="width:100%; border-radius:8px; overflow:hidden;"></div>
+    <div class="scan-feedback hidden" id="scan-feedback" style="color:white; text-align:center; padding:8px 0;"></div>
+  </div>
+
   <div class="app-wrapper">
     <header class="app-header">
       <button class="btn-back" onclick="window.location.href='accueil.html'">
@@ -59,9 +69,6 @@
         <div class="card-title">Ingrédients</div>
         <div id="ingredients-list"></div>
 
-        <div class="scan-feedback hidden" id="scan-feedback"></div>
-
-        <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px;" class="hidden"></div>
 
         <!-- Un seul bouton : Ajouter un ingrédient -->
         <div id="ingredient-actions" style="margin-top: 20px;">
