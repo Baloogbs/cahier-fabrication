@@ -106,8 +106,10 @@ document.addEventListener('keydown', function(e) {
 });
 
 let html5QrCode = null;
+let currentIngIdForScan = null;
 
-function startModernScan() {
+function startModernScan(ingId = null) {
+  currentIngIdForScan = ingId;
   const readerDiv = document.getElementById('reader');
   readerDiv.classList.remove('hidden');
   
@@ -128,7 +130,11 @@ function startModernScan() {
       console.log("Code détecté :", decodedText);
       html5QrCode.stop().then(() => {
         readerDiv.classList.add('hidden');
-        addIngredientFromCode(decodedText);
+        if (currentIngIdForScan) {
+          fillIngredientFromCode(currentIngIdForScan, decodedText);
+        } else {
+          addIngredientFromCode(decodedText);
+        }
       });
     },
     (errorMessage) => {
@@ -333,7 +339,21 @@ function handleScanInput(event) {
     if (!code) return;
     addIngredientFromCode(code);
     input.value = '';
-    // Masquer la zone de scan après ajout
+    // Masquer fillIngredientFromCode(ingId, code) {
+  const ing = ingredients.find(i => i.id === ingId);
+  if (!ing) return;
+
+  const productData = await resolveProductData(code);
+  ing.code = code;
+  ing.nom = productData.nom;
+  if (productData.img) {
+    if (!ing.photos) ing.photos = [];
+    ing.photos.push(productData.img);
+  }
+  renderIngredients();
+}
+
+async function la zone de scan après ajout
     const zone = document.getElementById('scan-zone');
     if (zone) zone.classList.add('hidden');
   }
@@ -458,6 +478,18 @@ function handlePhoto(event) {
 function renderIngredients() {
   const list = document.getElementById('ingredients-list');
   if (!list) return;
+  
+  // LOGIQUE : On vérifie s'il y a un ingrédient en cours de saisie (non validé)
+  const hasInProgress = ingredients.some(ing => !ing.validated);
+  const addBtnZone = document.getElementById('ingredient-actions');
+  if (addBtnZone) {
+    if (hasInProgress) {
+      addBtnZone.classList.add('hidden');
+    } else {
+      addBtnZone.classList.remove('hidden');
+    }
+  }
+
   if (!ingredients.length) { list.innerHTML = ''; return; }
   
   list.innerHTML = ingredients.map(ing => {
