@@ -16,12 +16,12 @@ const DEFAULT_USERS = [
 ];
 
 // ---- INITIALISATION ----
-document.addEventListener('DOMContentLoaded', init);
-
 function init() {
-  console.log("Initialisation forcée...");
-  // Forcer la création des utilisateurs
-  localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
+  console.log("Initialisation...");
+  // Restaurer la création si nécessaire (plus fiable)
+  if (!localStorage.getItem(USERS_KEY)) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
+  }
   
   if (!localStorage.getItem(FABRICATIONS_KEY)) {
     localStorage.setItem(FABRICATIONS_KEY, JSON.stringify([]));
@@ -31,8 +31,10 @@ function init() {
   console.log("Page détectée :", page);
 
   if (page === 'page-login') {
-    // Si déjà connecté → accueil direct
-    if (getSession()) window.location.href = 'accueil.html';
+    if (getSession()) {
+        window.location.href = 'accueil.html';
+        return;
+    }
     const emailInput = document.getElementById('login-email');
     if (emailInput) emailInput.focus();
   }
