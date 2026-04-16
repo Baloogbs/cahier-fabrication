@@ -502,7 +502,9 @@ function saveFabrication() {
 
   if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
   if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
-  if (!date) { showError(errEl, 'Veuillez saisir une date.'); return; }
+  
+  // Utiliser la date du jour si non saisie
+  const finalDate = date || new Date().toISOString().split('T')[0];
 
   const fab = {
     id: 'fab_' + Date.now(),
@@ -510,6 +512,7 @@ function saveFabrication() {
     nom,
     poids: parseFloat(poids).toFixed(1),
     unite,
+    date: finalDate,
     date,
     heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     auteur: session ? session.nom : 'Inconnu',
