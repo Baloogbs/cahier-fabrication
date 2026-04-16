@@ -492,19 +492,37 @@ function toggleValidateIngredient(id) {
 }
 
 function saveFabrication() {
-  const nom   = document.getElementById('fab-nom').value.trim();
-  const poids = document.getElementById('fab-poids').value;
-  const unite = document.getElementById('fab-unite').value;
-  const date  = document.getElementById('fab-date').value;
-  const type  = sessionStorage.getItem('new_type') || 'preparation';
-  const errEl = document.getElementById('save-error');
+  const nomEl   = document.getElementById('fab-nom');
+  const poidsEl = document.getElementById('fab-poids');
+  const uniteEl = document.getElementById('fab-unite');
+  const dateEl  = document.getElementById('fab-date');
+  const errEl   = document.getElementById('save-error');
   const session = getSession();
 
-  if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
-  if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
+  if (!nomEl || !poidsEl) {
+    alert("Erreur: Les champs du formulaire sont introuvables.");
+    return;
+  }
+
+  const nom   = nomEl.value.trim();
+  const poids = poidsEl.value;
+  const unite = uniteEl ? uniteEl.value : 'kg';
+  const inputDate = dateEl ? dateEl.value : '';
+  const type  = sessionStorage.getItem('new_type') || 'preparation';
+
+  if (!nom) { 
+    if (errEl) showError(errEl, 'Veuillez saisir un nom de préparation.'); 
+    else alert('Veuillez saisir un nom de préparation.');
+    return; 
+  }
+  if (!poids) { 
+    if (errEl) showError(errEl, 'Veuillez saisir la quantité.'); 
+    else alert('Veuillez saisir la quantité.');
+    return; 
+  }
   
   // Utiliser la date du jour si non saisie
-  const finalDate = date || new Date().toISOString().split('T')[0];
+  const finalDate = (inputDate && inputDate !== "") ? inputDate : new Date().toISOString().split('T')[0];
 
   const fab = {
     id: 'fab_' + Date.now(),
@@ -513,22 +531,26 @@ function saveFabrication() {
     poids: parseFloat(poids).toFixed(1),
     unite,
     date: finalDate,
-    date,
     heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     auteur: session ? session.nom : 'Inconnu',
     ingredients: ingredients.slice(),
     createdAt: new Date().toISOString(),
   };
 
-  const fabs = getFabrications();
-  fabs.push(fab);
-  localStorage.setItem(FABRICATIONS_KEY, JSON.stringify(fabs));
+  try {
+    const fabs = getFabrications();
+    fabs.push(fab);
+    localStorage.setItem(FABRICATIONS_KEY, JSON.stringify(fabs));
 
-  // Réinitialiser
-  ingredients = [];
-  photoData   = null;
+    // Réinitialiser
+    ingredients = [];
+    photoData   = null;
 
-  window.location.href = 'accueil.html';
+    window.location.href = 'accueil.html';
+  } catch (e) {
+    console.error("Erreur de stockage:", e);
+    alert("Impossible d'enregistrer la fabrication. Les photos sont peut-être trop nombreuses ou trop lourdes pour la mémoire du téléphone. Essayez avec moins de photos.");
+  }
 }
 
 // ---- DETAIL ----
