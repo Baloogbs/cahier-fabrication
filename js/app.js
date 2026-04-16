@@ -105,6 +105,50 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.body.className === 'page-login') handleLogin();
 });
 
+let html5QrCode = null;
+
+function startModernScan() {
+  const readerDiv = document.getElementById('reader');
+  readerDiv.classList.remove('hidden');
+  
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("reader");
+  }
+
+  const config = { 
+    fps: 10, 
+    qrbox: { width: 250, height: 150 },
+    aspectRatio: 1.0
+  };
+
+  html5QrCode.start(
+    { facingMode: "environment" }, 
+    config,
+    (decodedText) => {
+      console.log("Code détecté :", decodedText);
+      html5QrCode.stop().then(() => {
+        readerDiv.classList.add('hidden');
+        addIngredientFromCode(decodedText);
+      });
+    },
+    (errorMessage) => {
+      // On ignore les erreurs de scan répétitives pour ne pas polluer la console
+    }
+  ).catch((err) => {
+    console.error("Erreur scanner moderne :", err);
+    alert("Impossible d'ouvrir le scanner HD : " + err);
+    readerDiv.classList.add('hidden');
+  });
+}
+
+function stopModernScan() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      document.getElementById('reader').classList.add('hidden');
+    });
+  }
+}
+
 // ---- ACCUEIL ----
 function renderHeader() {
   const session = getSession();
