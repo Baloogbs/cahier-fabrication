@@ -563,6 +563,7 @@ function saveFabrication() {
   const errEl        = document.getElementById('save-error');
   const session      = getSession();
 
+  if (!preparateur) { showError(errEl, 'Veuillez saisir le nom du préparateur.'); return; }
   if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
   if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
   if (!date) { showError(errEl, 'Veuillez saisir une date.'); return; }
