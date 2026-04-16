@@ -578,12 +578,20 @@ function renderDetail() {
       else if (dlcDate <= warn3)   { dlcClass = 'dlc-warn';    hasWarn = true; }
     }
     
-    // Affichage multi-photos dans le détail
+    // Affichage multi-photos dans le détail avec effet miniature et oeil
     const photosArr = ing.photos || (ing.photo ? [ing.photo] : []);
     const photosHtml = photosArr.length > 0 ? `
       <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
         ${photosArr.map(p => `
-          <img src="${p}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; flex-shrink: 0;" />
+          <div style="position: relative; flex-shrink: 0; width: 100px; height: 100px;" onclick="window.open('${p}', '_blank')">
+            <img src="${p}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #eee; filter: blur(0.5px) brightness(0.9);" />
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); border-radius: 8px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+          </div>
         `).join('')}
       </div>
     ` : '';
