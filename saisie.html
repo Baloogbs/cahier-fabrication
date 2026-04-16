@@ -30,6 +30,9 @@
     <main class="main-content">
 
       <div class="card">
+        <div class="card-title">Informations générales</div>
+        <div class="type-badge" id="type-badge">Préparation bouchère</div>
+
         <div class="field-row">
           <label class="field-label">Nom de la préparation</label>
           <input type="text" id="fab-nom" placeholder="Ex : Brochettes provençales" />
@@ -38,9 +41,9 @@
         <div class="two-col">
           <div class="field-row">
             <label class="field-label">Quantité totale</label>
-            <div style="display: flex; gap: 5px; align-items: center;">
-              <input type="number" id="fab-poids" placeholder="0.00" step="0.1" min="0" style="flex: 1; min-width: 0;" />
-              <select id="fab-unite" style="width: 60px; height: 48px; border: 1px solid #ccc; border-radius: 8px; background: white; font-size: 14px; padding: 0 2px; text-align: center; -webkit-appearance: none;">
+            <div style="display: flex; gap: 5px;">
+              <input type="number" id="fab-poids" placeholder="0.00" step="0.1" min="0" style="flex: 1;" />
+              <select id="fab-unite" style="width: 70px; height: 48px; border: 1px solid #ccc; border-radius: 8px; background: white; font-size: 14px; padding: 0 5px; -webkit-appearance: none;">
                 <option value="kg">kg</option>
                 <option value="pièces">pcs</option>
                 <option value="g">g</option>
@@ -58,18 +61,11 @@
         <div class="card-title">Ingrédients</div>
         <div id="ingredients-list"></div>
 
-        <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px;" class="hidden"></div>
         <div class="scan-feedback hidden" id="scan-feedback"></div>
 
-        <!-- Système simplifié : Ajouter un ingrédient -->
-        <div id="ingredient-actions" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn-primary" onclick="startModernScan()" 
-            style="background: #1D9E75; color: white; display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; font-weight: 500; border: none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:12px;">
-              <path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-              <path d="M21 17v2a2 2 0 0 1-2-2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
+        <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px;" class="hidden"></div>
+
+        <!-- Un seul bouton : Ajouter un ingrédient -->
         <div id="ingredient-actions" style="margin-top: 20px;">
           <button class="btn-primary" onclick="addNewIngredient()" 
             style="background: #0C447C; color: white; display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; font-weight: 500; border: none; border-radius: 12px;">
@@ -77,8 +73,6 @@
               <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
             Ajouter un ingrédient
-          </button>
-        </div>
           </button>
         </div>
 

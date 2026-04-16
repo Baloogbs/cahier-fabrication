@@ -17,10 +17,11 @@ const DEFAULT_USERS = [
 
 // ---- INITIALISATION ----
 function init() {
-  console.log("Initialisation...");
-  // Restaurer la création si nécessaire (plus fiable)
-  if (!localStorage.getItem(USERS_KEY)) {
+  // Forcer la création des utilisateurs si localstorage vide ou corrompu
+  const usersStr = localStorage.getItem(USERS_KEY);
+  if (!usersStr || usersStr === '[]') {
     localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
+    console.log("Utilisateurs de démo initialisés dans localStorage.");
   }
   
   if (!localStorage.getItem(FABRICATIONS_KEY)) {
@@ -31,10 +32,8 @@ function init() {
   console.log("Page détectée :", page);
 
   if (page === 'page-login') {
-    if (getSession()) {
-        window.location.href = 'accueil.html';
-        return;
-    }
+    // Si déjà connecté → accueil direct
+    if (getSession()) window.location.href = 'accueil.html';
     const emailInput = document.getElementById('login-email');
     if (emailInput) emailInput.focus();
   }
@@ -109,26 +108,19 @@ document.addEventListener('keydown', function(e) {
 let html5QrCode = null;
 let currentIngIdForScan = null;
 
-function startModernScan(ingId = null) {
-  currentIngIdForScan = ingId;
+function startModernScan(ingId) {
+  currentIngIdForScan = ingId || null;
   const readerDiv = document.getElementById('reader');
   readerDiv.classList.remove('hidden');
-  
+
   if (!html5QrCode) {
     html5QrCode = new Html5Qrcode("reader");
   }
 
-  const config = { 
-    fps: 10, 
-    qrbox: { width: 250, height: 150 },
-    aspectRatio: 1.0
-  };
-
   html5QrCode.start(
-    { facingMode: "environment" }, 
-    config,
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
     (decodedText) => {
-      console.log("Code détecté :", decodedText);
       html5QrCode.stop().then(() => {
         readerDiv.classList.add('hidden');
         if (currentIngIdForScan) {
@@ -138,22 +130,12 @@ function startModernScan(ingId = null) {
         }
       });
     },
-    (errorMessage) => {
-      // On ignore les erreurs de scan répétitives pour ne pas polluer la console
-    }
+    () => {}
   ).catch((err) => {
-    console.error("Erreur scanner moderne :", err);
-    alert("Impossible d'ouvrir le scanner HD : " + err);
+    console.error("Erreur scanner :", err);
+    alert("Impossible d'ouvrir le scanner : " + err);
     readerDiv.classList.add('hidden');
   });
-}
-
-function stopModernScan() {
-  if (html5QrCode) {
-    html5QrCode.stop().then(() => {
-      document.getElementById('reader').classList.add('hidden');
-    });
-  }
 }
 
 // ---- ACCUEIL ----
@@ -200,17 +182,12 @@ function renderHistory() {
   container.innerHTML = `
     <div class="month-group">
       ${fabsDuMois.map(fab => `
-        <div class="fab-item" onclick="goToDetail('${fab.id}')" style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="flex: 1;">
-            <div class="fab-name" style="font-weight: 500;">${fab.nom}</div>
+        <div class="fab-item" onclick="goToDetail('${fab.id}')">
+          <div>
+            <div class="fab-name">${fab.nom}</div>
             <div class="fab-meta">${formatDate(fab.date)} · ${fab.poids} ${fab.unite || 'kg'}</div>
           </div>
-          <div style="color: #999; margin-left: 10px; display: flex; align-items: center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          </div>
+          <span class="fab-badge ${badgeClass(fab.type)}">${typeLabel(fab.type)}</span>
         </div>
       `).join('')}
     </div>
@@ -340,14 +317,32 @@ function handleScanInput(event) {
     if (!code) return;
     addIngredientFromCode(code);
     input.value = '';
+    // Masquer la zone de scan après ajout
     const zone = document.getElementById('scan-zone');
     if (zone) zone.classList.add('hidden');
+  }
+}
+
+async function addIngredientFromCode(code) {
+  const feedback = document.getElementById('scan-feedback');
+  if (feedback) { feedback.textContent = 'Recherche du produit...'; feedback.classList.remove('hidden'); }
+
+  const productData = await resolveProductData(code);
+  const id = Date.now();
+  ingredients.push({ id, code, nom: productData.nom, lot: '', dlc: '', photos: productData.img ? [productData.img] : [], validated: false });
+  renderIngredients();
+
+  if (feedback) {
+    feedback.textContent = 'Produit ajouté : ' + productData.nom;
+    setTimeout(() => feedback.classList.add('hidden'), 3000);
   }
 }
 
 async function fillIngredientFromCode(ingId, code) {
   const ing = ingredients.find(i => i.id === ingId);
   if (!ing) return;
+  const feedback = document.getElementById('scan-feedback');
+  if (feedback) { feedback.textContent = 'Recherche du produit...'; feedback.classList.remove('hidden'); }
 
   const productData = await resolveProductData(code);
   ing.code = code;
@@ -357,55 +352,25 @@ async function fillIngredientFromCode(ingId, code) {
     ing.photos.push(productData.img);
   }
   renderIngredients();
-}
-
-async function addIngredientFromCode(code) {
-  // Identification produit via API Open Food Facts (réel) ou démo
-  const feedback = document.getElementById('scan-feedback');
-  if (feedback) {
-    feedback.textContent = 'Recherche du produit...';
-    feedback.classList.remove('hidden');
-  }
-
-  const productData = await resolveProductData(code);
-  const id = Date.now();
-  
-  // On ajoute le produit avec sa photo si elle existe
-  const newIng = { 
-    id, 
-    code, 
-    nom: productData.nom, 
-    lot: '', 
-    dlc: '',
-    photos: productData.img ? [productData.img] : [] 
-  };
-  
-  ingredients.push(newIng);
-  renderIngredients();
 
   if (feedback) {
-    feedback.textContent = 'Produit ajouté : ' + productData.nom;
+    feedback.textContent = 'Produit trouvé : ' + productData.nom;
     setTimeout(() => feedback.classList.add('hidden'), 3000);
   }
-
-  // Masquer la zone de scan après ajout
-  const zone = document.getElementById('scan-zone');
-  if (zone) zone.classList.add('hidden');
 }
 
 async function resolveProductData(code) {
-  // Table de correspondance locale (démo rapide)
   const products = {
-    '3256540001649': { nom: 'Boeuf haché 15% MG', img: 'https://images.openfoodfacts.org/images/products/325/654/000/1649/front_fr.4.400.jpg' },
+    '3256540001649': { nom: 'Boeuf haché 15% MG', img: null },
+    '3564700012345': { nom: 'Poivrons rouges', img: null },
+    '8712100851644': { nom: 'Marinade herbes de Provence', img: null },
+    '3256541234567': { nom: 'Oignons rouges', img: null },
   };
-  
   if (products[code]) return products[code];
 
-  // Appel à l'API Open Food Facts
   try {
     const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
     const data = await response.json();
-    
     if (data.status === 1 && data.product) {
       const nom = data.product.product_name_fr || data.product.product_name || ('Produit ' + code);
       const img = data.product.image_front_small_url || data.product.image_front_thumb_url || null;
@@ -414,7 +379,6 @@ async function resolveProductData(code) {
   } catch (error) {
     console.error("Erreur API OFF:", error);
   }
-
   return { nom: 'Produit ' + code, img: null };
 }
 
@@ -478,23 +442,18 @@ function handlePhoto(event) {
 function renderIngredients() {
   const list = document.getElementById('ingredients-list');
   if (!list) return;
-  
-  // LOGIQUE : On vérifie s'il y a un ingrédient en cours de saisie (non validé)
+
+  // Masquer le bouton "Ajouter" si un ingrédient est en cours de saisie
   const hasInProgress = ingredients.some(ing => !ing.validated);
   const addBtnZone = document.getElementById('ingredient-actions');
   if (addBtnZone) {
-    if (hasInProgress) {
-      addBtnZone.classList.add('hidden');
-    } else {
-      addBtnZone.classList.remove('hidden');
-    }
+    addBtnZone.classList.toggle('hidden', hasInProgress);
   }
 
   if (!ingredients.length) { list.innerHTML = ''; return; }
-  
+
   list.innerHTML = ingredients.map(ing => {
     if (ing.validated) {
-      // AFFICHAGE RÉDUIT (Ingrédient validé)
       return `
         <div class="ingredient-item validated" style="padding: 10px; background: #f0f7f4; border: 1px solid #1D9E75; opacity: 0.9;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -509,31 +468,30 @@ function renderIngredients() {
       `;
     }
 
-    // AFFICHAGE COMPLET (Pendant la saisie)
     return `
     <div class="ingredient-item">
       <div class="ing-header">
         <div style="flex:1;">
           <label class="field-label" style="font-size:11px; margin-bottom:4px; display:block; color:#666;">Nom de l'ingrédient</label>
-          <input type="text" class="ing-name-input" placeholder="Ex: Boeuf, Sel, Marinade..." value="${ing.nom}" 
-            oninput="updateIngredient(${ing.id}, 'nom', this.value)" 
+          <input type="text" class="ing-name-input" placeholder="Ex: Boeuf, Sel, Marinade..." value="${ing.nom}"
+            oninput="updateIngredient(${ing.id}, 'nom', this.value)"
             style="width:100%; height:36px; font-weight:500; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; background:#fff;" />
         </div>
         <button class="ing-delete" onclick="removeIngredient(${ing.id})" style="margin-top:20px;">&#10005;</button>
       </div>
 
-      <!-- BOUTONS D'ACTION (Scanner / Photo) -->
+      <!-- Boutons Scanner / Photo -->
       <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button onclick="startModernScan(${ing.id})" 
-          style="flex: 1; height: 44px; background: #1D9E75; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button onclick="startModernScan(${ing.id})"
+          style="flex:1; height:44px; background:#1D9E75; color:white; border:none; border-radius:10px; font-size:13px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path>
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
           Scanner
         </button>
-        <button onclick="triggerPhotoForIng(${ing.id})" 
-          style="flex: 1; height: 44px; background: #0C447C; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button onclick="triggerPhotoForIng(${ing.id})"
+          style="flex:1; height:44px; background:#0C447C; color:white; border:none; border-radius:10px; font-size:13px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
             <circle cx="12" cy="13" r="4"></circle>
@@ -549,7 +507,6 @@ function renderIngredients() {
             oninput="updateIngredient(${ing.id}, 'lot', this.value)"
             style="height:36px;" />
         </div>
-        </div>
         <div class="ing-field">
           <label style="font-size:11px; color:#666;">DLC</label>
           <input type="date" value="${ing.dlc}"
@@ -557,30 +514,21 @@ function renderIngredients() {
             style="height:36px;" />
         </div>
       </div>
-      
-      <!-- ZONE MULTI-PHOTOS -->
-      <div style="margin: 15px 0;">
-        <label style="font-size:11px; color:#666; display:block; margin-bottom:8px;">Photos (Étiquette, Produit...)</label>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+      <!-- Photos -->
+      <div style="margin: 15px 0 10px 0;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
           ${(ing.photos || []).map((p, idx) => `
             <div style="position:relative;">
-              <img src="${p}" style="width:70px; height:70px; object-fit:cover; border-radius:8px; border: 1px solid #ddd;" />
-              <button onclick="removePhotoFromIng(${ing.id}, ${idx})" style="position:absolute; top:-5px; right:-5px; background:#d32f2f; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; display:flex; align-items:center; justify-content:center;">✕</button>
+              <img src="${p}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;" />
+              <button onclick="removePhotoFromIng(${ing.id}, ${idx})" style="position:absolute; top:-5px; right:-5px; background:#d32f2f; color:white; border:none; border-radius:50%; width:16px; height:16px; font-size:9px; display:flex; align-items:center; justify-content:center;">✕</button>
             </div>
           `).join('')}
-          
-          <button onclick="triggerPhotoForIng(${ing.id})" 
-            style="width:70px; height:70px; border: 1.5px dashed #0C447C; border-radius: 8px; background: #E6F1FB; color: #0C447C; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C447C" stroke-width="2" style="margin-bottom:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Ajouter
-          </button>
         </div>
       </div>
 
-      <button class="btn-validate-ing" 
-        onclick="toggleValidateIngredient(${ing.id})" 
-        style="width:100%; margin-top:5px; padding: 12px; border-radius: 8px; border: none; 
-               background: #0C447C; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <button onclick="toggleValidateIngredient(${ing.id})"
+        style="width:100%; margin-top:5px; padding:12px; border-radius:8px; border:none; background:#0C447C; color:white; font-weight:500; font-size:15px;">
         ✓ Valider l'ingrédient
       </button>
     </div>
@@ -597,37 +545,17 @@ function toggleValidateIngredient(id) {
 }
 
 function saveFabrication() {
-  const nomEl   = document.getElementById('fab-nom');
-  const poidsEl = document.getElementById('fab-poids');
-  const uniteEl = document.getElementById('fab-unite');
-  const dateEl  = document.getElementById('fab-date');
-  const errEl   = document.getElementById('save-error');
+  const nom   = document.getElementById('fab-nom').value.trim();
+  const poids = document.getElementById('fab-poids').value;
+  const unite = document.getElementById('fab-unite').value;
+  const date  = document.getElementById('fab-date').value;
+  const type  = sessionStorage.getItem('new_type') || 'preparation';
+  const errEl = document.getElementById('save-error');
   const session = getSession();
 
-  if (!nomEl || !poidsEl) {
-    alert("Erreur: Les champs du formulaire sont introuvables.");
-    return;
-  }
-
-  const nom   = nomEl.value.trim();
-  const poids = poidsEl.value;
-  const unite = uniteEl ? uniteEl.value : 'kg';
-  const inputDate = dateEl ? dateEl.value : '';
-  const type  = sessionStorage.getItem('new_type') || 'preparation';
-
-  if (!nom) { 
-    if (errEl) showError(errEl, 'Veuillez saisir un nom de préparation.'); 
-    else alert('Veuillez saisir un nom de préparation.');
-    return; 
-  }
-  if (!poids) { 
-    if (errEl) showError(errEl, 'Veuillez saisir la quantité.'); 
-    else alert('Veuillez saisir la quantité.');
-    return; 
-  }
-  
-  // Utiliser la date du jour si non saisie
-  const finalDate = (inputDate && inputDate !== "") ? inputDate : new Date().toISOString().split('T')[0];
+  if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
+  if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
+  if (!date) { showError(errEl, 'Veuillez saisir une date.'); return; }
 
   const fab = {
     id: 'fab_' + Date.now(),
@@ -635,27 +563,22 @@ function saveFabrication() {
     nom,
     poids: parseFloat(poids).toFixed(1),
     unite,
-    date: finalDate,
+    date,
     heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     auteur: session ? session.nom : 'Inconnu',
     ingredients: ingredients.slice(),
     createdAt: new Date().toISOString(),
   };
 
-  try {
-    const fabs = getFabrications();
-    fabs.push(fab);
-    localStorage.setItem(FABRICATIONS_KEY, JSON.stringify(fabs));
+  const fabs = getFabrications();
+  fabs.push(fab);
+  localStorage.setItem(FABRICATIONS_KEY, JSON.stringify(fabs));
 
-    // Réinitialiser
-    ingredients = [];
-    photoData   = null;
+  // Réinitialiser
+  ingredients = [];
+  photoData   = null;
 
-    window.location.href = 'accueil.html';
-  } catch (e) {
-    console.error("Erreur de stockage:", e);
-    alert("Impossible d'enregistrer la fabrication. Les photos sont peut-être trop nombreuses ou trop lourdes pour la mémoire du téléphone. Essayez avec moins de photos.");
-  }
+  window.location.href = 'accueil.html';
 }
 
 // ---- DETAIL ----
@@ -683,34 +606,24 @@ function renderDetail() {
       else if (dlcDate <= warn3)   { dlcClass = 'dlc-warn';    hasWarn = true; }
     }
     
-    // Affichage multi-photos dans le détail avec effet miniature et oeil
+    // Affichage multi-photos dans le détail
     const photosArr = ing.photos || (ing.photo ? [ing.photo] : []);
     const photosHtml = photosArr.length > 0 ? `
-      <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
-        ${photosArr.map(p => `
-          <div style="position: relative; flex-shrink: 0; width: 100px; height: 100px;" onclick="window.open('${p}', '_blank')">
-            <img src="${p}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #eee; filter: blur(0.5px) brightness(0.9);" />
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); border-radius: 8px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </div>
-          </div>
-        `).join('')}
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+        ${photosArr.map(p => `<img src="${p}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />`).join('')}
       </div>
     ` : '';
 
     return `
-      <div class="ing-row" style="margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-          <div style="flex: 1;">
-            <div class="ing-row-name" style="font-weight: 600; font-size: 16px; margin-bottom: 2px;">${ing.nom || 'Sans nom'}</div>
-            <div class="ing-row-meta" style="color: #666; font-size: 13px;">Lot : ${ing.lot || '—'}</div>
-          </div>
-          <span class="dlc-badge ${dlcClass}" style="flex-shrink: 0;">DLC ${dlcLabel}</span>
-        </div>
+      <div class="ing-row">
         ${photosHtml}
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div class="ing-row-name">${ing.nom || 'Sans nom'}</div>
+            <div class="ing-row-meta">Lot : ${ing.lot || '—'}</div>
+          </div>
+          <span class="dlc-badge ${dlcClass}">DLC ${dlcLabel}</span>
+        </div>
       </div>
     `;
   }).join('');
@@ -774,6 +687,11 @@ function renderDetail() {
       <div class="card-title">Ingrédients &amp; traçabilité</div>
       ${ingsHtml}
     </div>` : ''}
+
+    <div class="card">
+      <div class="card-title">Photo</div>
+      ${photoHtml}
+    </div>
   `;
 }
 
