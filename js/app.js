@@ -535,6 +535,7 @@ function renderIngredients() {
         </div>
       </div>
 
+      <div id="ing-error-${ing.id}" style="color:#d32f2f; font-size:13px; text-align:center; margin-top:8px; display:none;"></div>
       <button onclick="toggleValidateIngredient(${ing.id})"
         style="width:100%; margin-top:5px; padding:12px; border-radius:8px; border:none; background:#0C447C; color:white; font-weight:500; font-size:15px;">
         ✓ Valider l'ingrédient
@@ -546,10 +547,26 @@ function renderIngredients() {
 
 function toggleValidateIngredient(id) {
   const ing = ingredients.find(i => i.id === id);
-  if (ing) {
-    ing.validated = !ing.validated;
-    renderIngredients();
+  if (!ing) return;
+
+  if (!ing.validated) {
+    const errDiv = document.getElementById('ing-error-' + id);
+    if (!ing.nom || !ing.nom.trim()) {
+      if (errDiv) { errDiv.textContent = "Le nom de l'ingrédient est obligatoire."; errDiv.style.display = 'block'; }
+      return;
+    }
+    if (!ing.lot || !ing.lot.trim()) {
+      if (errDiv) { errDiv.textContent = "Le numéro de lot est obligatoire."; errDiv.style.display = 'block'; }
+      return;
+    }
+    if (!ing.dlc) {
+      if (errDiv) { errDiv.textContent = "La DLC est obligatoire."; errDiv.style.display = 'block'; }
+      return;
+    }
   }
+
+  ing.validated = !ing.validated;
+  renderIngredients();
 }
 
 function saveFabrication() {
