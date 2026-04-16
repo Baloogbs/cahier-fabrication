@@ -347,13 +347,24 @@ async function addIngredientFromCode(code) {
     feedback.classList.remove('hidden');
   }
 
-  const nomProduit = await resolveProductName(code);
+  const productData = await resolveProductData(code);
   const id = Date.now();
-  ingredients.push({ id, code, nom: nomProduit, lot: '', dlc: '' });
+  
+  // On ajoute le produit avec sa photo si elle existe
+  const newIng = { 
+    id, 
+    code, 
+    nom: productData.nom, 
+    lot: '', 
+    dlc: '',
+    photos: productData.img ? [productData.img] : [] 
+  };
+  
+  ingredients.push(newIng);
   renderIngredients();
 
   if (feedback) {
-    feedback.textContent = 'Produit ajouté : ' + nomProduit;
+    feedback.textContent = 'Produit ajouté : ' + productData.nom;
     setTimeout(() => feedback.classList.add('hidden'), 3000);
   }
 
@@ -362,32 +373,29 @@ async function addIngredientFromCode(code) {
   if (zone) zone.classList.add('hidden');
 }
 
-async function resolveProductName(code) {
-  // 1. Table de correspondance locale (démo rapide)
+async function resolveProductData(code) {
+  // Table de correspondance locale (démo rapide)
   const products = {
-    '3256540001649': 'Boeuf haché 15% MG',
-    '3564700012345': 'Poivrons rouges',
-    '8712100851644': 'Marinade herbes de Provence',
-    '3256541234567': 'Oignons rouges',
+    '3256540001649': { nom: 'Boeuf haché 15% MG', img: 'https://images.openfoodfacts.org/images/products/325/654/000/1649/front_fr.4.400.jpg' },
   };
   
   if (products[code]) return products[code];
 
-  // 2. Appel à l'API Open Food Facts si non trouvé en local
+  // Appel à l'API Open Food Facts
   try {
     const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
     const data = await response.json();
     
-    if (data.status === 1 && data.product && data.product.product_name_fr) {
-      return data.product.product_name_fr;
-    } else if (data.status === 1 && data.product && data.product.product_name) {
-      return data.product.product_name;
+    if (data.status === 1 && data.product) {
+      const nom = data.product.product_name_fr || data.product.product_name || ('Produit ' + code);
+      const img = data.product.image_front_small_url || data.product.image_front_thumb_url || null;
+      return { nom, img };
     }
   } catch (error) {
     console.error("Erreur API OFF:", error);
   }
 
-  return 'Produit ' + code; // Par défaut si non trouvé
+  return { nom: 'Produit ' + code, img: null };
 }
 
 function removeIngredient(id) {
