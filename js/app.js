@@ -80,7 +80,6 @@ function handleLogin() {
   
   console.log("Email saisi :", email);
   const usersStr = localStorage.getItem(USERS_KEY);
-  console.log("Contenu local (USERS_KEY) :", usersStr);
   
   const users = JSON.parse(usersStr || '[]');
   const user = users.find(u => u.email === email && u.password === password);
@@ -193,8 +192,8 @@ function renderHistory() {
       ${fabsDuMois.map(fab => `
         <div class="fab-item" onclick="goToDetail('${fab.id}')">
           <div>
-            <div class="fab-name">${fab.nom}</div>
-            <div class="fab-meta">${formatDate(fab.date)} · ${fab.poids} ${fab.unite || 'kg'}</div>
+            <div class="fab-name">${escapeHtml(fab.nom)}</div>
+            <div class="fab-meta">${formatDate(fab.date)} · ${escapeHtml(fab.poids)} ${escapeHtml(fab.unite || 'kg')}</div>
           </div>
           <span class="fab-badge ${badgeClass(fab.type)}">${typeLabel(fab.type)}</span>
         </div>
@@ -468,8 +467,8 @@ function renderIngredients() {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="background: #1D9E75; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">✓</div>
-              <div style="font-weight: 500; font-size: 14px; color: #00695c;">${ing.nom || 'Sans nom'}</div>
-              <div style="font-size: 12px; color: #666; margin-left: 5px;">(Lot: ${ing.lot || '—'})</div>
+              <div style="font-weight: 500; font-size: 14px; color: #00695c;">${escapeHtml(ing.nom) || 'Sans nom'}</div>
+              <div style="font-size: 12px; color: #666; margin-left: 5px;">(Lot: ${escapeHtml(ing.lot) || '—'})</div>
             </div>
             <button onclick="toggleValidateIngredient(${ing.id})" style="background: none; border: none; color: #1D9E75; font-size: 12px; text-decoration: underline; font-weight: 500;">Modifier</button>
           </div>
@@ -482,7 +481,7 @@ function renderIngredients() {
       <div class="ing-header">
         <div style="flex:1;">
           <label class="field-label" style="font-size:11px; margin-bottom:4px; display:block; color:#666;">Nom de l'ingrédient</label>
-          <input type="text" class="ing-name-input" placeholder="Ex: Boeuf, Sel, Marinade..." value="${ing.nom}"
+          <input type="text" class="ing-name-input" placeholder="Ex: Boeuf, Sel, Marinade..." value="${escapeHtml(ing.nom)}"
             oninput="updateIngredient(${ing.id}, 'nom', this.value)"
             style="width:100%; height:36px; font-weight:500; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; background:#fff;" />
         </div>
@@ -512,13 +511,13 @@ function renderIngredients() {
       <div class="ing-fields" style="margin-top:15px;">
         <div class="ing-field">
           <label style="font-size:11px; color:#666;">n° de Lot</label>
-          <input type="text" placeholder="Ex: LOT2026A" value="${ing.lot}"
+          <input type="text" placeholder="Ex: LOT2026A" value="${escapeHtml(ing.lot)}"
             oninput="updateIngredient(${ing.id}, 'lot', this.value)"
             style="height:36px;" />
         </div>
         <div class="ing-field">
           <label style="font-size:11px; color:#666;">DLC</label>
-          <input type="date" value="${ing.dlc}"
+          <input type="date" value="${escapeHtml(ing.dlc)}"
             oninput="updateIngredient(${ing.id}, 'dlc', this.value)"
             style="height:36px;" />
         </div>
@@ -631,8 +630,8 @@ function renderDetail() {
         ${photosHtml}
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div class="ing-row-name">${ing.nom || 'Sans nom'}</div>
-            <div class="ing-row-meta">Lot : ${ing.lot || '—'}</div>
+            <div class="ing-row-name">${escapeHtml(ing.nom) || 'Sans nom'}</div>
+            <div class="ing-row-meta">Lot : ${escapeHtml(ing.lot) || '—'}</div>
           </div>
           <span class="dlc-badge ${dlcClass}">DLC ${dlcLabel}</span>
         </div>
@@ -668,7 +667,7 @@ function renderDetail() {
           </svg>
         </button>
       </div>
-      <div class="detail-name">${fab.nom}</div>
+      <div class="detail-name">${escapeHtml(fab.nom)}</div>
       <div class="info-grid">
         <div class="info-block">
           <span class="info-label">Date de fabrication</span>
@@ -676,7 +675,7 @@ function renderDetail() {
         </div>
         <div class="info-block">
           <span class="info-label">Quantité finale</span>
-          <span class="info-value">${fab.poids} ${fab.unite || 'kg'}</span>
+          <span class="info-value">${escapeHtml(fab.poids)} ${escapeHtml(fab.unite || 'kg')}</span>
         </div>
         <div class="info-block" style="margin-top:8px;">
           <span class="info-label">Heure</span>
@@ -689,7 +688,7 @@ function renderDetail() {
           <span class="conformity-text ${conformityClass}">${conformityText}</span>
         </div>` : ''}
       <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e0e0e0; font-size: 14px; color: #555;">
-        Préparé par : <strong>${fab.preparateur || fab.auteur}</strong>
+        Préparé par : <strong>${escapeHtml(fab.preparateur || fab.auteur)}</strong>
       </div>
     </div>
 
@@ -704,6 +703,16 @@ function renderDetail() {
 // ---- UTILITAIRES ----
 function getFabrications() {
   try { return JSON.parse(localStorage.getItem(FABRICATIONS_KEY) || '[]'); } catch { return []; }
+}
+
+function escapeHtml(str) {
+  if (!str && str !== 0) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function deleteFabrication(id) {
