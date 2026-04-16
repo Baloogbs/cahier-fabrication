@@ -149,12 +149,17 @@ function renderHistory() {
   container.innerHTML = `
     <div class="month-group">
       ${fabsDuMois.map(fab => `
-        <div class="fab-item" onclick="goToDetail('${fab.id}')">
-          <div>
-            <div class="fab-name">${fab.nom}</div>
-            <div class="fab-meta">${formatDate(fab.date)} · ${fab.poids} kg</div>
+        <div class="fab-item" onclick="goToDetail('${fab.id}')" style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="flex: 1;">
+            <div class="fab-name" style="font-weight: 500;">${fab.nom}</div>
+            <div class="fab-meta">${formatDate(fab.date)} · ${fab.poids} ${fab.unite || 'kg'}</div>
           </div>
-          <span class="fab-badge ${badgeClass(fab.type)}">${typeLabel(fab.type)}</span>
+          <div style="color: #999; margin-left: 10px; display: flex; align-items: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -460,8 +465,8 @@ function renderIngredients() {
           `).join('')}
           
           <button onclick="triggerPhotoForIng(${ing.id})" 
-            style="width:70px; height:70px; border: 1.5px dashed #1D9E75; border-radius: 8px; background: #f0f7f4; color: #1D9E75; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            style="width:70px; height:70px; border: 1.5px dashed #0C447C; border-radius: 8px; background: #E6F1FB; color: #0C447C; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C447C" stroke-width="2" style="margin-bottom:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             Ajouter
           </button>
         </div>
@@ -470,7 +475,7 @@ function renderIngredients() {
       <button class="btn-validate-ing" 
         onclick="toggleValidateIngredient(${ing.id})" 
         style="width:100%; margin-top:5px; padding: 12px; border-radius: 8px; border: none; 
-               background: #1D9E75; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+               background: #0C447C; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         ✓ Valider l'ingrédient
       </button>
     </div>
@@ -489,13 +494,14 @@ function toggleValidateIngredient(id) {
 function saveFabrication() {
   const nom   = document.getElementById('fab-nom').value.trim();
   const poids = document.getElementById('fab-poids').value;
+  const unite = document.getElementById('fab-unite').value;
   const date  = document.getElementById('fab-date').value;
   const type  = sessionStorage.getItem('new_type') || 'preparation';
   const errEl = document.getElementById('save-error');
   const session = getSession();
 
   if (!nom) { showError(errEl, 'Veuillez saisir un nom de préparation.'); return; }
-  if (!poids) { showError(errEl, 'Veuillez saisir le poids final.'); return; }
+  if (!poids) { showError(errEl, 'Veuillez saisir la quantité.'); return; }
   if (!date) { showError(errEl, 'Veuillez saisir une date.'); return; }
 
   const fab = {
@@ -503,6 +509,7 @@ function saveFabrication() {
     type,
     nom,
     poids: parseFloat(poids).toFixed(1),
+    unite,
     date,
     heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     auteur: session ? session.nom : 'Inconnu',
@@ -603,8 +610,8 @@ function renderDetail() {
           <span class="info-value">${formatDate(fab.date)}</span>
         </div>
         <div class="info-block">
-          <span class="info-label">Poids final</span>
-          <span class="info-value">${fab.poids} kg</span>
+          <span class="info-label">Quantité finale</span>
+          <span class="info-value">${fab.poids} ${fab.unite || 'kg'}</span>
         </div>
         <div class="info-block" style="margin-top:8px;">
           <span class="info-label">Fabriqué par</span>
