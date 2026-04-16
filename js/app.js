@@ -679,10 +679,6 @@ function renderDetail() {
           <span class="info-value">${fab.poids} ${fab.unite || 'kg'}</span>
         </div>
         <div class="info-block" style="margin-top:8px;">
-          <span class="info-label">Préparé par</span>
-          <span class="info-value">${fab.preparateur || fab.auteur}</span>
-        </div>
-        <div class="info-block" style="margin-top:8px;">
           <span class="info-label">Heure</span>
           <span class="info-value">${fab.heure}</span>
         </div>
@@ -692,6 +688,9 @@ function renderDetail() {
           <div class="conformity-dot ${conformityClass}"></div>
           <span class="conformity-text ${conformityClass}">${conformityText}</span>
         </div>` : ''}
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e0e0e0; font-size: 14px; color: #555;">
+        Préparé par : <strong>${fab.preparateur || fab.auteur}</strong>
+      </div>
     </div>
 
     ${fab.ingredients.length ? `
