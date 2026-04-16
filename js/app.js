@@ -581,21 +581,23 @@ function renderDetail() {
     // Affichage multi-photos dans le détail
     const photosArr = ing.photos || (ing.photo ? [ing.photo] : []);
     const photosHtml = photosArr.length > 0 ? `
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
-        ${photosArr.map(p => `<img src="${p}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />`).join('')}
+      <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
+        ${photosArr.map(p => `
+          <img src="${p}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; flex-shrink: 0;" />
+        `).join('')}
       </div>
     ` : '';
 
     return `
-      <div class="ing-row">
-        ${photosHtml}
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div class="ing-row-name">${ing.nom || 'Sans nom'}</div>
-            <div class="ing-row-meta">Lot : ${ing.lot || '—'}</div>
+      <div class="ing-row" style="margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div style="flex: 1;">
+            <div class="ing-row-name" style="font-weight: 600; font-size: 16px; margin-bottom: 2px;">${ing.nom || 'Sans nom'}</div>
+            <div class="ing-row-meta" style="color: #666; font-size: 13px;">Lot : ${ing.lot || '—'}</div>
           </div>
-          <span class="dlc-badge ${dlcClass}">DLC ${dlcLabel}</span>
+          <span class="dlc-badge ${dlcClass}" style="flex-shrink: 0;">DLC ${dlcLabel}</span>
         </div>
+        ${photosHtml}
       </div>
     `;
   }).join('');
